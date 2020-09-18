@@ -3,18 +3,24 @@ Problem Definition
 You will have access to the following raw data files:
 1. A file containing the number of employees by locations (US Census Public Use
 Microdata Area PUMA) and occupations
+
 2. A file containing the average salary for each occupation
+
 You will need to use these files to produce one new file containing the locations and their
 average salary and total salary. Each row in this new file will contain the name of a location and
 the columns will show the value of the average salary and total salary for that location. The
 resulting file should be sorted by total salary descending.
+
 We will evaluate this assignment considering the following criteria:
+
 Considerations
-● Performance (will your approach scale?)
-● Reusability of code (is it properly organized?)
+
+Performance (will your approach scale?)
+Reusability of code (is it properly organized?)
+
 Bonus (not required)
-● Add a third column with the entropy of labor share for each location.
-● Add a fourth column with the highest paid occupation for each location.
+Add a third column with the entropy of labor share for each location.
+Add a fourth column with the highest paid occupation for each location.
 
 '''
 import csv
@@ -35,9 +41,14 @@ def read_puma_file(puma_file):
     '''
     Here we read the puma file.
     '''
+    print("processing PUMA file")
+    # could have read remote file, but it would have been harder to find its separator.
     my_sep = find_separator(puma_file)
     df_puma_file = pd.read_csv(puma_file, sep=my_sep)
+    print(df_puma_file.head(10).to_string())
+    print(df_puma_file.size)
 
+    return df_puma_file
 
 
 def read_average_salaries_file(average_salaries_file):
@@ -45,13 +56,45 @@ def read_average_salaries_file(average_salaries_file):
     here we read the average salaries file
     :return:
     '''
+    print("Processing averages file")
+    my_sep = find_separator(average_salaries_file)
+    df_avg_file = pd.read_csv(average_salaries_file, sep=my_sep)
+    print(df_avg_file.head(10).to_string())
+    print(df_avg_file.size)
+    return df_avg_file
 
-def merge_files():
+
+def merge_files(df_puma, df_avg):
     '''
     columns: locations, average salary, total salary.
     sorted by total salary descending.
     :return:
     '''
+    # to find column names to do the merge
+    print(list(df_puma))
+    print(list(df_avg))
+    # do the actual merge
+    df_merged = pd.merge(df_puma, df_avg, left_on='occupation_id', right_on='ID Detailed Occupation', how='left')
+    # locations (puma_name, perhaps I should drop PUMA)
+    # and their average salary (Average Wage)
+    # and total salary ('total_population' * 'average_wage')
+    # I'm keeping occupation_name
+
+    df_merged['total_salary'] = df_merged['total_population'] * df_merged['average_wage']
+
+    df_merged.drop(columns=['puma_id',
+                            'occupation_id',
+                            'total_population',
+                            'average_wage',
+                            'ID Detailed Occupation',
+                            'Detailed Occupation'],
+                   inplace=True)
+
+    df_merged.rename(columns={'puma_name': 'Location'},
+                     inplace=True)
+
+    print(df_merged.head(10).to_string())
+    print(df_merged.size)
 
 
 def add_entropy():
@@ -63,8 +106,15 @@ def add_entropy():
 
 
 def add_highest_paid_per_location():
+    '''
+   find highest paid
 
+    :return:
+    '''
 
 
 if __name__ == '__main__':
     print('Resolving the assignment')
+    my_df_puma = read_puma_file('../data/pumas_occupations_num_employees.csv')
+    my_df_avg = read_average_salaries_file('../data/occupations_avg_wage.csv')
+    merge_files(my_df_puma, my_df_avg)
