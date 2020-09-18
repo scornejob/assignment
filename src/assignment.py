@@ -98,7 +98,7 @@ def merge_files(df_puma, df_avg):
                            'Average Wage': 'Average salary'},
                   inplace=True)
     result.sort_values(by=['Total salary'], ascending=False, inplace=True)
-    result.to_csv('assignment.csv')
+    result.to_csv('../output/assignment.csv')
     return result
 
 
@@ -133,7 +133,6 @@ def add_highest_paid_per_location(df_puma, df_avg):
     #aux = aux.sort_values(by='Average Wage', ascending=False)
 
     print(aux)
-    print(aux.size)
     aux['occupation_name'] = df_merged.loc[aux.index, 'occupation_name']
     aux.drop(columns={'Average Wage'}, inplace=True)
 
@@ -153,8 +152,7 @@ def add_highest_paid_per_location(df_puma, df_avg):
     result.sort_values(by=['Total salary'], ascending=False, inplace=True)
 
     print(result.head(10).to_string())
-    print(result.size)
-    result.to_csv('highest_paid.csv')
+    result.to_csv('../output/highest_paid.csv', index=False)
 
 if __name__ == '__main__':
     print('Resolving the assignment')
