@@ -148,7 +148,7 @@ def add_highest_paid_per_location(df_puma, df_avg):
                   inplace=True)
 
 
-    result = result.merge(aux, on='Location', how='left', copy=False)
+    result = result.merge(aux, left_on='Location', right_on='Location', how='left', copy=False)
 
     result.sort_values(by=['Total salary'], ascending=False, inplace=True)
 
@@ -160,5 +160,5 @@ if __name__ == '__main__':
     print('Resolving the assignment')
     my_df_puma = read_puma_file('../data/pumas_occupations_num_employees.csv')
     my_df_avg = read_average_salaries_file('../data/occupations_avg_wage.csv')
-    #merge_files(my_df_puma, my_df_avg)
+    merge_files(my_df_puma, my_df_avg)
     add_highest_paid_per_location(my_df_puma, my_df_avg)
