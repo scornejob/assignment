@@ -81,23 +81,13 @@ def merge_files(df_puma, df_avg):
     # locations (puma_name, perhaps I should drop PUMA)
     # and their average salary (Average Wage)
     # and total salary ('total_population' * 'average_wage')
-    # I'm keeping occupation_name
 
     df_merged['total_salary'] = df_merged['total_population'] * df_merged['average_wage']
 
-
-    # df_merged.drop(columns=['puma_id',
-    #                         'occupation_id',
-    #                         'total_population',
-    #                         'average_wage',
-    #                         'ID Detailed Occupation',
-    #                         'Detailed Occupation'],
-    #                inplace=True)
-    # print(df_merged.head(10).to_string())
-    # print(df_merged.size)
-
     df_merged.rename(columns={'puma_name': 'Location'},
                      inplace=True)
+
+    # This is th actual assignment
     total_salary = df_merged.groupby('Location')['total_salary'].sum()
 
     average_salary = df_merged.groupby('Location')['Average Wage'].mean()
@@ -106,7 +96,7 @@ def merge_files(df_puma, df_avg):
     result.rename(columns={'total_salary': 'Total salary',
                            'Average Wage': 'Average salary'},
                   inplace=True)
-
+    result.sort_values(by=['Total salary'], ascending=False, inplace=True)
     result.to_csv('assignment.csv')
     return result
 
@@ -119,12 +109,27 @@ def add_entropy():
     '''
 
 
-def add_highest_paid_per_location():
+def add_highest_paid_per_location(df_puma, df_avg):
     '''
-   find highest paid
+    Add a fourth column with the highest paid occupation for each location.
 
     :return:
     '''
+
+    df_merged = pd.merge(df_puma, df_avg, left_on='occupation_id', right_on='ID Detailed Occupation', how='left')
+    # locations (puma_name, perhaps I should drop PUMA)
+    # and their average salary (Average Wage)
+    # and total salary ('total_population' * 'average_wage')
+
+    df_merged['total_salary'] = df_merged['total_population'] * df_merged['average_wage']
+
+    df_merged.rename(columns={'puma_name': 'Location'},
+                     inplace=True)
+
+    print(df_merged.head(10).to_string())
+    idx = df_merged.groupby('Location')['Average Wage'].transform(max) == df_merged['Average Wage']
+
+    print(df_merged[idx].size)
 
 
 if __name__ == '__main__':
@@ -132,3 +137,4 @@ if __name__ == '__main__':
     my_df_puma = read_puma_file('../data/pumas_occupations_num_employees.csv')
     my_df_avg = read_average_salaries_file('../data/occupations_avg_wage.csv')
     merge_files(my_df_puma, my_df_avg)
+    #add_highest_paid_per_location(my_df_puma, my_df_avg)
