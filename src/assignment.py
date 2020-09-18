@@ -7,7 +7,8 @@ Microdata Area PUMA) and occupations
 2. A file containing the average salary for each occupation
 
 You will need to use these files to produce one new file containing the locations and their
-average salary and total salary. Each row in this new file will contain the name of a location and
+average salary and total salary.
+Each row in this new file will contain the name of a location and
 the columns will show the value of the average salary and total salary for that location. The
 resulting file should be sorted by total salary descending.
 
@@ -45,6 +46,8 @@ def read_puma_file(puma_file):
     # could have read remote file, but it would have been harder to find its separator.
     my_sep = find_separator(puma_file)
     df_puma_file = pd.read_csv(puma_file, sep=my_sep)
+    #df_puma_file['total_salary'] = df_puma_file['total_population']*df_puma_file['average_wage']
+    #df_puma_wage_per_location = df_puma_file.groupby('puma_name')['total_salary'].sum()
     print(df_puma_file.head(10).to_string())
     print(df_puma_file.size)
 
@@ -82,25 +85,36 @@ def merge_files(df_puma, df_avg):
 
     df_merged['total_salary'] = df_merged['total_population'] * df_merged['average_wage']
 
-    df_merged.drop(columns=['puma_id',
-                            'occupation_id',
-                            'total_population',
-                            'average_wage',
-                            'ID Detailed Occupation',
-                            'Detailed Occupation'],
-                   inplace=True)
+
+    # df_merged.drop(columns=['puma_id',
+    #                         'occupation_id',
+    #                         'total_population',
+    #                         'average_wage',
+    #                         'ID Detailed Occupation',
+    #                         'Detailed Occupation'],
+    #                inplace=True)
+    # print(df_merged.head(10).to_string())
+    # print(df_merged.size)
 
     df_merged.rename(columns={'puma_name': 'Location'},
                      inplace=True)
+    total_salary = df_merged.groupby('Location')['total_salary'].sum()
 
-    print(df_merged.head(10).to_string())
-    print(df_merged.size)
+    average_salary = df_merged.groupby('Location')['Average Wage'].mean()
+
+    result = pd.concat([total_salary, average_salary], axis=1)
+    result.rename(columns={'total_salary': 'Total salary',
+                           'Average Wage': 'Average salary'},
+                  inplace=True)
+
+    result.to_csv('assignment.csv')
+    return result
+
 
 
 def add_entropy():
     '''
     entropy = sum[(probability of i) times (log base 2 (probability of i)]
-
     :return:
     '''
 
