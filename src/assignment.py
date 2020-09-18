@@ -46,9 +46,8 @@ def read_puma_file(puma_file):
     # could have read remote file, but it would have been harder to find its separator.
     my_sep = find_separator(puma_file)
     df_puma_file = pd.read_csv(puma_file, sep=my_sep)
-    #df_puma_file['total_salary'] = df_puma_file['total_population']*df_puma_file['average_wage']
-    #df_puma_wage_per_location = df_puma_file.groupby('puma_name')['total_salary'].sum()
-    print(df_puma_file.head(10).to_string())
+
+    #print(df_puma_file.head(10).to_string())
     print(df_puma_file.size)
 
     return df_puma_file
@@ -62,7 +61,7 @@ def read_average_salaries_file(average_salaries_file):
     print("Processing averages file")
     my_sep = find_separator(average_salaries_file)
     df_avg_file = pd.read_csv(average_salaries_file, sep=my_sep)
-    print(df_avg_file.head(10).to_string())
+    #print(df_avg_file.head(10).to_string())
     print(df_avg_file.size)
     return df_avg_file
 
@@ -74,8 +73,10 @@ def merge_files(df_puma, df_avg):
     :return:
     '''
     # to find column names to do the merge
-    print(list(df_puma))
-    print(list(df_avg))
+    print('Doing the assignment')
+    #print(list(df_puma))
+    #print(list(df_avg))
+
     # do the actual merge
     df_merged = pd.merge(df_puma, df_avg, left_on='occupation_id', right_on='ID Detailed Occupation', how='left')
     # locations (puma_name, perhaps I should drop PUMA)
@@ -115,26 +116,49 @@ def add_highest_paid_per_location(df_puma, df_avg):
 
     :return:
     '''
-
+    print('Adding highest paid')
     df_merged = pd.merge(df_puma, df_avg, left_on='occupation_id', right_on='ID Detailed Occupation', how='left')
-    # locations (puma_name, perhaps I should drop PUMA)
-    # and their average salary (Average Wage)
-    # and total salary ('total_population' * 'average_wage')
 
     df_merged['total_salary'] = df_merged['total_population'] * df_merged['average_wage']
 
     df_merged.rename(columns={'puma_name': 'Location'},
                      inplace=True)
 
-    print(df_merged.head(10).to_string())
-    idx = df_merged.groupby('Location')['Average Wage'].transform(max) == df_merged['Average Wage']
 
-    print(df_merged[idx].size)
+    #print(df_merged.head(10).to_string())
+    #print(df_merged.size)
+    # used this: https://www.thetopsites.net/article/52793641.shtml, but it doesnt scale...
+    # df1 = df.merge(df.groupby('file', as_index=False)['f0max'].max())
+    aux = df_merged.groupby(['Location'])['Average Wage'].agg(max).reset_index()
+    #aux = aux.sort_values(by='Average Wage', ascending=False)
 
+    print(aux)
+    print(aux.size)
+    aux['occupation_name'] = df_merged.loc[aux.index, 'occupation_name']
+    aux.drop(columns={'Average Wage'}, inplace=True)
+
+    # This is th actual assignment
+    total_salary = df_merged.groupby('Location')['total_salary'].sum()
+
+    average_salary = df_merged.groupby('Location')['Average Wage'].mean()
+
+    result = pd.concat([total_salary, average_salary], axis=1)
+    result.rename(columns={'total_salary': 'Total salary',
+                           'Average Wage': 'Average salary'},
+                  inplace=True)
+
+
+    result = result.merge(aux, on='Location', how='left', copy=False)
+
+    result.sort_values(by=['Total salary'], ascending=False, inplace=True)
+
+    print(result.head(10).to_string())
+    print(result.size)
+    result.to_csv('highest_paid.csv')
 
 if __name__ == '__main__':
     print('Resolving the assignment')
     my_df_puma = read_puma_file('../data/pumas_occupations_num_employees.csv')
     my_df_avg = read_average_salaries_file('../data/occupations_avg_wage.csv')
-    merge_files(my_df_puma, my_df_avg)
-    #add_highest_paid_per_location(my_df_puma, my_df_avg)
+    #merge_files(my_df_puma, my_df_avg)
+    add_highest_paid_per_location(my_df_puma, my_df_avg)
